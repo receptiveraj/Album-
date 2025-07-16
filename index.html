@@ -1,0 +1,225 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rajveer's Album'</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }h1 {
+  margin-bottom: 20px;
+  font-size: 26px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  max-width: 1000px;
+  width: 100%;
+}
+
+.photo-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.3s;
+}
+
+.photo-card:hover {
+  transform: translateY(-5px);
+}
+
+.photo-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.caption {
+  padding: 10px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.viewer {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.viewer img {
+  max-width: 90vw;
+  max-height: 80vh;
+  border-radius: 8px;
+}
+
+.viewer .controls {
+  margin-top: 20px;
+}
+
+.viewer .controls button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  margin: 0 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.viewer .controls button:hover {
+  background: #0056b3;
+}
+
+#passwordLayer {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 100;
+}
+
+#passwordLayer input {
+  padding: 10px;
+  font-size: 16px;
+  margin-bottom: 10px;
+  width: 220px;
+}
+
+#passwordLayer button {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#passwordLayer button:hover {
+  background: #218838;
+}
+
+#errorMsg {
+  color: red;
+  margin-top: 8px;
+}
+  </style>
+</head>
+<body>
+  <div id="passwordLayer">
+    <h2>Enter Album Password</h2>
+    <input type="password" id="albumPassword" placeholder="Enter Password">
+    <button onclick="unlockAlbum()">Unlock Album</button>
+    <div id="errorMsg"></div>
+  </div>
+
+  <h1>MemoryLane</h1>
+  <div class="grid" id="gallery"></div>
+
+  <div class="viewer" id="viewer">
+    <img id="viewerImg">
+    <div class="controls">
+      <button onclick="prev()">Prev</button>
+      <button onclick="next()">Next</button>
+      <button onclick="closeViewer()">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const imageLinks = [
+      "https://i.postimg.cc/fb2knSNb/IMG20231206161001.jpg",
+      "https://i.postimg.cc/sXbX1F1d/IMG20231206161601.jpg",
+      "https://i.postimg.cc/FHvYjQph/IMG20240122150308.jpg",
+      "https://i.postimg.cc/V6hw4jcj/IMG20240122150928.jpg",
+      "https://i.postimg.cc/Jh1RhrqB/IMG20240122164136.jpg",
+      "https://i.postimg.cc/HLHk74pn/IMG20240325134036.jpg",
+      "https://i.postimg.cc/y6rxrZTp/IMG20240325134433.jpg",
+      "https://i.postimg.cc/MKCTzJNy/IMG20240325134855.jpg",
+      "https://i.postimg.cc/nrMzhFn1/IMG20240423064758.jpg",
+      "https://i.postimg.cc/wvgRgYtW/IMG20240423183946.jpg",
+      "https://i.postimg.cc/6pZ8Zpnj/IMG20240427183935.jpg",
+      "https://i.postimg.cc/gJsX0t8G/IMG20240504181056.jpg",
+      "https://i.postimg.cc/Gh5DYfN2/IMG20240531165423.jpg",
+      "https://i.postimg.cc/L6CtD5qm/IMG20240609122247.jpg",
+      "https://i.postimg.cc/6qzdD5YL/IMG20240616121934.jpg",
+      "https://i.postimg.cc/h40bJpcz/IMG20240616121948.jpg",
+      "https://i.postimg.cc/HWMRfG0G/IMG20240701092938.jpg",
+      "https://i.postimg.cc/7Y3vTvb1/IMG20240805095444.jpg",
+      "https://i.postimg.cc/3JC6xgbn/IMG20240805101523.jpg",
+      "https://i.postimg.cc/Z5LhXkSY/IMG20240819164303.jpg",
+      "https://i.postimg.cc/g2z7XnCd/IMG20240819164211.jpg"
+    ];
+
+    let currentIndex = 0;
+
+    function loadGallery() {
+      const gallery = document.getElementById('gallery');
+      gallery.innerHTML = "";
+      imageLinks.forEach((src, i) => {
+        const card = document.createElement('div');
+        card.className = 'photo-card';
+        const img = document.createElement('img');
+        img.src = src;
+        img.onclick = () => openViewer(i);
+        const caption = document.createElement('div');
+        caption.className = 'caption';
+        caption.innerText = `Photo ${i+1}`;
+        card.appendChild(img);
+        card.appendChild(caption);
+        gallery.appendChild(card);
+      });
+    }
+
+    function openViewer(index) {
+      currentIndex = index;
+      document.getElementById('viewerImg').src = imageLinks[index];
+      document.getElementById('viewer').style.display = 'flex';
+    }
+
+    function closeViewer() {
+      document.getElementById('viewer').style.display = 'none';
+    }
+
+    function next() {
+      currentIndex = (currentIndex + 1) % imageLinks.length;
+      openViewer(currentIndex);
+    }
+
+    function prev() {
+      currentIndex = (currentIndex - 1 + imageLinks.length) % imageLinks.length;
+      openViewer(currentIndex);
+    }
+
+    function unlockAlbum() {
+      const password = document.getElementById('albumPassword').value;
+      if (password === "rajsecure123") {
+        document.getElementById('passwordLayer').style.display = "none";
+        loadGallery();
+      } else {
+        document.getElementById('errorMsg').innerText = "Incorrect password!";
+      }
+    }
+  </script>
+</body>
+</html>
